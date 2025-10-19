@@ -1,0 +1,222 @@
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+// Servo Driver Setup
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+#define SERVO_CHANNEL1 0
+#define SERVO_CHANNEL2 4
+#define SERVO_CHANNEL3 8
+#define SERVO_CHANNEL4 15
+#define STEP_DELAY1 45
+#define STEP_DELAY2 45
+#define STEP_DELAY3 60
+#define STEP_DELAY4 3
+
+// Motor Pins
+const int IN1 = 2, IN2 = 3, ENA = 4;
+const int IN3 = 5, IN4 = 6, ENB = 7;
+const int IN5 = 12, IN6 = 11, ENA2 = 13;
+const int IN7 = 10, IN8 = 9, ENB2 = 8;
+
+// Helper: Convert 0–180° angle to PWM pulse
+uint16_t angleToPulse(float angle) {
+  float pulseMin = 102;  // ≈500 µs
+  float pulseMax = 512;  // ≈2500 µs
+  return (uint16_t)(pulseMin + (angle / 180.0) * (pulseMax - pulseMin));
+}
+
+void sweepFromTo(uint8_t channel, float startAngle, float endAngle, int stepDelay) {
+  for (float angle = startAngle; angle <= endAngle; angle += 1) {
+    pwm.setPWM(channel, 0, angleToPulse(angle));
+    delay(stepDelay);
+  }
+}
+
+void sweepToFrom(uint8_t channel, float endAngle, float startAngle, int stepDelay) {
+  for (float angle = endAngle; angle >= startAngle; angle -= 1) {
+    pwm.setPWM(channel, 0, angleToPulse(angle));
+    delay(stepDelay);
+  }
+}
+
+// Motion Control
+void moveForward(int speed) {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  digitalWrite(IN5, HIGH); digitalWrite(IN6, LOW);
+  digitalWrite(IN7, HIGH); digitalWrite(IN8, LOW);
+  analogWrite(ENA, speed); analogWrite(ENB, speed);
+  analogWrite(ENA2, speed); analogWrite(ENB2, speed);
+}
+
+void moveBackward(int speed) {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+  digitalWrite(IN5, LOW); digitalWrite(IN6, HIGH);
+  digitalWrite(IN7, LOW); digitalWrite(IN8, HIGH);
+  analogWrite(ENA, speed); analogWrite(ENB, speed);
+  analogWrite(ENA2, speed); analogWrite(ENB2, speed);
+}
+
+void fullPivotTurnRight(int speed) {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+  digitalWrite(IN5, LOW); digitalWrite(IN6, HIGH);
+  digitalWrite(IN7, HIGH); digitalWrite(IN8, LOW);
+  analogWrite(ENA, speed); analogWrite(ENB, speed);
+  analogWrite(ENA2, speed); analogWrite(ENB2, speed);
+}
+
+void fullPivotTurnLeft(int speed) {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  digitalWrite(IN5, HIGH); digitalWrite(IN6, LOW);
+  digitalWrite(IN7, LOW); digitalWrite(IN8, HIGH);
+  analogWrite(ENA, speed); analogWrite(ENB, speed);
+  analogWrite(ENA2, speed); analogWrite(ENB2, speed);
+}
+
+void stopMotors() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, LOW); analogWrite(ENA, 0);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, LOW); analogWrite(ENB, 0);
+  digitalWrite(IN5, LOW); digitalWrite(IN6, LOW); analogWrite(ENA2, 0);
+  digitalWrite(IN7, LOW); digitalWrite(IN8, LOW); analogWrite(ENB2, 0);
+}
+
+void pickPlaceShelf() {
+  // 1) S1: 200 → 110
+  sweepToFrom(SERVO_CHANNEL1, 200, 110, STEP_DELAY1);
+  delay(500);
+
+  // 2) S2: 30 → 55
+  sweepFromTo(SERVO_CHANNEL2, 30, 55, STEP_DELAY2);
+  delay(500);
+
+  // 3) S3: 45 → 25
+  sweepToFrom(SERVO_CHANNEL3, 45, 25, STEP_DELAY3);
+  delay(500);
+
+  // 4) S4: 0 → 70
+  sweepFromTo(SERVO_CHANNEL4, 0, 70, STEP_DELAY4);
+  delay(3000);
+
+  // 5) S3: 25 → 45
+  sweepFromTo(SERVO_CHANNEL3, 25, 45, STEP_DELAY3);
+  delay(500);
+
+  // 6) S2: 55 → 30
+  sweepToFrom(SERVO_CHANNEL2, 55, 30, STEP_DELAY2);
+  delay(500);
+
+  // 7) S1: 110 → 200
+  sweepFromTo(SERVO_CHANNEL1, 110, 200, STEP_DELAY1);
+  delay(500);
+
+  // Part 2
+  // 8) S2: 30 → 70
+  sweepFromTo(SERVO_CHANNEL2, 30, 70, STEP_DELAY2);
+  delay(500);
+
+  // 9) S3: 45 → 36
+  sweepToFrom(SERVO_CHANNEL3, 45, 36, STEP_DELAY3);
+  delay(500);
+
+  // 10) S4: 0 → 70
+  sweepToFrom(SERVO_CHANNEL4, 70, 0, STEP_DELAY4);
+  delay(500);
+
+  // 11) S3: 36 → 45
+  sweepFromTo(SERVO_CHANNEL3, 36, 45, STEP_DELAY3);
+  delay(500);
+
+  // 12) S2: 70 → 30
+  sweepToFrom(SERVO_CHANNEL2, 70, 30, STEP_DELAY2);
+  delay(500);
+}
+
+void pickupDrop() {
+  // 1) S2: 30 → 70
+  sweepFromTo(SERVO_CHANNEL2, 30, 70, STEP_DELAY2);
+  delay(500);
+
+  // 2) S3: 45 → 25
+  sweepToFrom(SERVO_CHANNEL3, 45, 25, STEP_DELAY3);
+  delay(500);
+
+  // 3) S4: 0 → 70
+  sweepFromTo(SERVO_CHANNEL4, 0, 70, STEP_DELAY4);
+  delay(2000);
+
+  // 4) S3: 25 - 45
+  sweepFromTo(SERVO_CHANNEL3, 25, 45, STEP_DELAY3);
+  delay(500);
+
+  // 5) S2: 70 - 30
+  sweepToFrom(SERVO_CHANNEL2, 70, 30, STEP_DELAY2);
+  delay(500);
+
+  // 6) S1: 200 → 110
+  sweepToFrom(SERVO_CHANNEL1, 200, 110, STEP_DELAY1);
+  delay(500);
+
+  // 7) S2: 30 → 70
+  sweepFromTo(SERVO_CHANNEL2, 30, 70, STEP_DELAY2);
+  delay(500);
+
+  // 8) S4: 0 → 70
+  sweepToFrom(SERVO_CHANNEL4, 70, 0, STEP_DELAY4);
+  delay(3000);
+
+  // 9) S2: 70 → 30
+  sweepToFrom(SERVO_CHANNEL2, 70, 30, STEP_DELAY2);
+  delay(500);
+
+  // 10) S1: 110 → 200
+  sweepFromTo(SERVO_CHANNEL1, 110, 200, STEP_DELAY1);
+  delay(500);
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  // Servo Driver Init
+  pwm.begin();
+  pwm.setPWMFreq(50);
+  delay(10);
+
+  // Motor Pin Setup
+  int pins[] = {IN1, IN2, ENA, IN3, IN4, ENB, IN5, IN6, ENA2, IN7, IN8, ENB2};
+  for (int i = 0; i < 12; i++) pinMode(pins[i], OUTPUT);
+
+  // ---- Servo Sequence ----
+  pickPlaceShelf();
+  delay(2000);
+  // ---- Motor Sequence ----
+  moveForward(255);
+  delay(2000);
+  stopMotors();
+  delay(500);
+  fullPivotTurnRight(255);
+  delay(2500);
+  stopMotors();
+  delay(500);
+  moveForward(255);
+  delay(2500);
+
+  stopMotors();
+  delay(1500);
+
+  pickupDrop();
+
+  pwm.setPWM(SERVO_CHANNEL1, 0, 0);
+  pwm.setPWM(SERVO_CHANNEL2, 0, 0);
+  pwm.setPWM(SERVO_CHANNEL3, 0, 0);
+  pwm.setPWM(SERVO_CHANNEL4, 0, 0);
+
+  stopMotors(); // final stop
+  while (true); // Halt forever
+}
+
+void loop() {
+  // Nothing in loop
+}
