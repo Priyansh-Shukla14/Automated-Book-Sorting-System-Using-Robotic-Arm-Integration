@@ -16,7 +16,7 @@ Controlled using Arduino, with all mechanical components designed in SolidWorks.
 3. Operate rover to pick and place books manually or through code.
 
 ## Contributors
-- Priyansh Shukla - GitHub: [PriyanshUsername](https://github.com/PriyanshUsername)
+- Priyansh Shukla - GitHub: [PriyanshUsername](https://github.com/Priyansh-Shukla14)
 - Advik Aggarwal - GitHub: [krigx123](https://github.com/krigx123)
 - Akshat Kawaria - GitHub:
 - Atharva Somani
