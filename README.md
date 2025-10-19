@@ -18,7 +18,7 @@ Controlled using Arduino, with all mechanical components designed in SolidWorks.
 ## Contributors
 - Priyansh Shukla - GitHub: [PriyanshUsername](https://github.com/Priyansh-Shukla14)
 - Advik Aggarwal - GitHub: [krigx123](https://github.com/krigx123)
-- Akshat Kawaria - GitHub:
+- Akshat Kawaria - GitHub:[akshatkawaria](https://github.com/akshatkawaria)
 - Atharva Somani
 
 ## Roles
